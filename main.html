@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLCO & SFT Gelişmiş Klinik Karar Destek Paneli</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --primary: #3498db;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* DİL SEÇİCİ BUTON STİLLERİ */
+        .lang-switcher {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .lang-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #4a5568;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            color: #1a365d;
+            padding-right: 100px; /* Butonlara çarpmaması için */
+        }
+
+        header p.subtitle {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+            padding-left: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .label-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .label-title-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            color: #475569;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 6px;
+            position: relative;
+        }
+
+        .tooltip-box {
+            display: none;
+            position: absolute;
+            top: 130%; 
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #ffffff;
+            padding: 14px;
+            border-radius: 6px;
+            width: 380px;
+            font-size: 12px;
+            font-weight: normal;
+            line-height: 1.4;
+            z-index: 200;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
+
+        .tooltip-box::after {
+            content: "";
+            position: absolute;
+            bottom: 100%; 
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent #1e293b transparent;
+        }
+
+        .tooltip-icon:hover .tooltip-box {
+            display: block;
+        }
+
+        .tt-section { margin-bottom: 8px; border-bottom: 1px solid #334155; padding-bottom: 6px; }
+        .tt-section:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .tt-title { font-weight: bold; margin-bottom: 4px; }
+        .tt-inc { color: #4ade80; font-weight: bold; margin-bottom: 4px; }
+        .tt-dec { color: #f87171; font-weight: bold; margin-bottom: 4px; }
+
+        .current-value {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 15px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            background: white;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #edf2f7;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .severity-badge {
+            display: block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .sh-yüksek { background-color: #ebf8ff; color: #2b6cb0; }
+        .sh-normal { background-color: #f0fff4; color: #2f855a; }
+        .sh-sınırda { background-color: #fefff0; color: #b7791f; }
+        .sh-hafif { background-color: #fffaf0; color: #dd6b20; }
+        .sh-orta { background-color: #fff5f5; color: #c53030; }
+        .sh-ileri { background-color: #fff5f5; color: #9b2c2c; border: 1px dashed #e53e3e; }
+
+        .result-card {
+            background-color: #f0f4f8;
+            border: 1px solid #d2d6dc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1a365d;
+            border-bottom: 1px solid #d2d6dc;
+            padding-bottom: 8px;
+        }
+
+        .result-section {
+            margin-bottom: 15px;
+        }
+
+        .result-label {
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .result-list {
+            margin: 5px 0 0 0;
+            padding-left: 20px;
+            font-weight: 500;
+            color: #1a365d;
+        }
+        
+        .result-list li {
+            margin-bottom: 4px;
+        }
+
+        .footer-text {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="lang-switcher">
+        <button class="lang-btn active" id="btnTr" onclick="changeLanguage('tr')">TR</button>
+        <button class="lang-btn" id="btnEn" onclick="changeLanguage('en')">EN</button>
+    </div>
+
+    <header>
+        <h1 id="uiTitle">DLCO & SFT Gelişmiş Klinik Karar Destek Paneli</h1>
+        <p id="uiSubtitle" class="subtitle">Difüzyon ve Gelişmiş Patern Analizi Yönetim Sistemi</p>
+    </header>
+
+    <div class="main-layout">
+        <div>
+            <div class="section-title" id="uiSec1">1. Difüzyon Kapasitesi (DLCO & KCO)</div>
+            <div class="input-card">
+                
+                <div class="input-group">
+                    <div class="label-container">
+                        <div class="label-title-wrapper">
+                            <label for="dlco" id="uiLblDlco">DLCO Değeri</label>
+                            <div class="tooltip-icon">ⓘ
+                                <div class="tooltip-box" id="ttDlco"></div>
+                            </div>
+                        </div>
+                        <span class="current-value">%<span id="dlcoNum">100</span></span>
+                    </div>
+                    <input type="range" id="dlco" min="20" max="160" value="100" oninput="evaluateMetrics()">
+                    <div id="dlcoSeverity" class="severity-badge sh-normal"></div>
+                </div>
+
+                <div class="input-group">
+                    <div class="label-container">
+                        <div class="label-title-wrapper">
+                            <label for="dlcoVa" id="uiLblKco">DLCO/VA (KCO) Oranı</label>
+                            <div class="tooltip-icon">ⓘ
+                                <div class="tooltip-box" id="ttKco"></div>
+                            </div>
+                        </div>
+                        <span class="current-value">%<span id="dlcoVaNum">100</span></span>
+                    </div>
+                    <input type="range" id="dlcoVa" min="20" max="160" value="100" oninput="evaluateMetrics()">
+                    <div id="dlcoVaSeverity" class="severity-badge sh-normal"></div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div>
+            <div class="section-title">
+                <span id="uiSec2">2. Solunum Fonksiyon Testi (SFT)</span>
+                <div class="tooltip-icon">ⓘ
+                    <div class="tooltip-box" style="width: 360px;" id="ttSft"></div>
+                </div>
+            </div>
+            
+            <label class="toggle-container">
+                <input type="checkbox" id="manualSftToggle" onchange="toggleSftMode()">
+                <span id="uiToggleTxt">SFT Değerlerini Sayısal / Manuel Gir</span>
+            </label>
+
+            <div id="classicSftGroup" class="input-card">
+                <div class="input-group">
+                    <label for="sft" id="uiClassicLbl">SFT Patern Seçimi</label>
+                    <select id="sft" onchange="evaluateMetrics()">
+                        <option value="normal" id="optNormal">Normal</option>
+                        <option value="obstruktif" id="optObst">Obstrüktif</option>
+                        <option value="restriktif" id="optRest">Restriktif</option>
+                        <option value="mikst" id="optMixed">Mikst (Obstrüktif + Restriktif)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="customSftGroup" class="input-card hidden">
+                <div class="input-group">
+                    <div class="label-container">
+                        <label for="fev1" id="uiLblFev1">FEV1 Değeri (%)</label>
+                        <span class="current-value">%<span id="fev1Num">80</span></span>
+                    </div>
+                    <input type="range" id="fev1" min="15" max="140" value="80" oninput="evaluateMetrics()">
+                    <div id="fev1Severity" class="severity-badge sh-normal"></div>
+                </div>
+
+                <div class="input-group">
+                    <div class="label-container">
+                        <label for="fvc" id="uiLblFvc">FVC Değeri (%)</label>
+                        <span class="current-value">%<span id="fvcNum">85</span></span>
+                    </div>
+                    <input type="range" id="fvc" min="15" max="140" value="85" oninput="evaluateMetrics()">
+                    <div id="fvcSeverity" class="severity-badge sh-normal"></div>
+                </div>
+
+                <div class="input-group" style="background: #edf2f7; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <div class="label-container">
+                        <label for="fev1Fvc" style="font-weight: 700;" id="uiLblRatio">FEV1 / FVC Oranı (%)</label>
+                        <span class="current-value" style="color: #2b6cb0; font-size: 16px;">%<span id="fev1FvcRatio">80</span></span>
+                    </div>
+                    <input type="range" id="fev1Fvc" min="30" max="100" value="80" oninput="evaluateMetrics()">
+                </div>
+                
+                <div id="calculatedSftBadge" class="severity-badge sh-normal" style="margin-top:0;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultCard" class="result-card">
+        <div class="container-result">
+            <div class="result-title" id="uiResTitle">📋 Entegre Değerlendirme Sonucu</div>
+            
+            <div class="result-section">
+                <div class="result-label" id="uiResSft">Aktif SFT Bulgusu</div>
+                <div id="activeSftText" class="result-value" style="font-weight: bold; color: #2B00EB;"></div>
+            </div>
+
+            <div class="result-section">
+                <div class="result-label" id="uiResMech">Fizyopatolojik Mekanizma</div>
+                <div id="mechanismText" class="result-value"></div>
+            </div>
+
+            <div class="result-section">
+                <div class="result-label" id="uiResDiseases">Olası Hastalıklar / Klinik Sebepler</div>
+                <div id="diseasesText"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-text">Developed by Dr. Ersin Demirer & RTOmega - Licensed via MIT License</div>
+</div>
+
+<script>
+let currentLang = 'tr';
+
+const langData = {
+    tr: {
+        title: "DLCO & SFT Gelişmiş Klinik Karar Destek Paneli",
+        subtitle: "Difüzyon ve Gelişmiş Patern Analizi Yönetim Sistemi",
+        sec1: "1. Difüzyon Kapasitesi (DLCO & KCO)",
+        sec2: "2. Solunum Fonksiyon Testi (SFT)",
+        lblDlco: "DLCO Değeri",
+        lblKco: "DLCO/VA (KCO) Oranı",
+        lblFev1: "FEV1 Değeri (%)",
+        lblFvc: "FVC Değeri (%)",
+        lblRatio: "FEV1 / FVC Oranı (%)",
+        toggleTxt: "SFT Değerlerini Sayısal / Manuel Gir",
+        classicLbl: "SFT Patern Seçimi",
+        resTitle: "📋 Entegre Değerlendirme Sonucu",
+        resSft: "Aktif SFT Bulgusu",
+        resMech: "Fizyopatolojik Mekanizma",
+        resDiseases: "Olası Hastalıklar / Klinik Sebepler",
+        optNormal: "Normal",
+        optObst: "Obstrüktif",
+        optRest: "Restriktif",
+        optMixed: "Mikst (Obstrüktif + Restriktif)",
+        ttDlco: `<div class="tt-section"><div class="tt-inc">▲ DLCO'yu Artıran Durumlar / Değişkenler:</div>• Egzersiz (kapiller yatak artışı)<br>• Supin / Yatar pozisyon (kapiller kan hacmi artışı)<br>• Müller manevrası (derin soluk alma)<br>• Pulmoner hemoraji (akciğer içi kanama)<br>• Polistemi, Sol-sağ şant (ASD), Obezite, Astım, Gebelik, Yüksek irtifa, Sabah saatleri</div><div class="tt-section"><div class="tt-dec">▼ DLCO'yu Azaltan Durumlar / Değişkenler:</div>• Egzersiz sonrası erken dönem, Ayakta dik durma<br>• Valsalva manevrası, Akciğer rezeksiyonu<br>• Pulmoner amfizem, Pulmoner vasküler hastalıklar<br>• İnterstisyel akciğer hastalıkları, Anemi, Akşam saatleri<br>• Toksik İlaçlar (amiodaron, bleomisin, methotrexate)<br>• Pulmoner lenfanjitik karsinomatosis, Sigara, Alkol</div>`,
+        ttKco: `<div class="tt-section"><div class="tt-inc">▲ KCO'yu Artıranlar:</div>Nöromüsküler hastalıklar, yetersiz inspiryum eforu, kifoskolyoz, parankimi sağlam rezeksiyonlar, alveoler hemoraji, hafif sol kalp yetmezliği.</div><div class="tt-section"><div class="tt-dec">▼ KCO'yu Azaltanlar:</div>Amfizem, interstisyel akciğer hastalıkları, pulmoner vasküler hastalıklar, diffüz alveolo-kapiller hasar.</div>`,
+        ttSft: `<div class="tt-section"><div class="tt-title" style="color: #4ade80;">🟢 Normal SFT Eğilimi:</div>FEV1/FVC &ge; %70 ve FVC &ge; %80. Akciğer hacimleri ve havayolları fizyolojik sınırlardadır.</div><div class="tt-section"><div class="tt-title" style="color: #e67e22;">🟠 Obstrüktif Patern:</div>FEV1/FVC &lt; %70 kriterine bağlıdır. Havayolu akım darlığı mevcuttur. Hafif, orta, ağır evreleri FEV1 belirler.</div><div class="tt-section"><div class="tt-title" style="color: #f1c40f;">🟡 Restriktif Patern Eğilimi:</div>FEV1/FVC &ge; %70 ve FVC &lt; %80 olduğunda volüm kısıtlılığı kuşkusu doğar. Derecelendirmesi FVC'ye göredir.</div>`
+    },
+    en: {
+        title: "Advanced DLCO & Spirometry Clinical Decision Panel",
+        subtitle: "Diffusion and Advanced Pattern Analysis Management System",
+        sec1: "1. Diffusion Capacity (DLCO & KCO)",
+        sec2: "2. Pulmonary Function Test (PFT/Spirometry)",
+        lblDlco: "DLCO Value",
+        lblKco: "DLCO/VA (KCO) Ratio",
+        lblFev1: "FEV1 Value (%)",
+        lblFvc: "FVC Value (%)",
+        lblRatio: "FEV1 / FVC Ratio (%)",
+        toggleTxt: "Enter Spirometry Values Numerically / Manually",
+        classicLbl: "Spirometry Pattern Selection",
+        resTitle: "📋 Integrated Evaluation Result",
+        resSft: "Active Spirometry Finding",
+        resMech: "Pathophysiological Mechanism",
+        resDiseases: "Possible Diseases / Clinical Causes",
+        optNormal: "Normal",
+        optObst: "Obstructive",
+        optRest: "Restrictive",
+        optMixed: "Mixed (Obstructive + Restrictive)",
+        ttDlco: `<div class="tt-section"><div class="tt-inc">▲ Factors Increasing DLCO:</div>• Exercise (due to capillary recruitment)<br>• Supine position (increased capillary blood volume)<br>• Müller maneuver (inspiration against closed airway)<br>• Pulmonary hemorrhage (intrapulmonary bleeding)<br>• Polycythemia, Left-to-right shunt (ASD), Obesity, Asthma, Pregnancy, High altitude, Morning</div><div class="tt-section"><div class="tt-dec">▼ Factors Decreasing DLCO:</div>• Early postexercise period, Standing position<br>• Valsalva maneuver, Lung resection (surgery)<br>• Pulmonary emphysema, Pulmonary vascular diseases<br>• Interstitial lung diseases, Anemia, Evening hours<br>• Toxic Drugs (amiodarone, bleomycin, methotrexate)<br>• Pulmonary lymphangitic carcinomatosis, Smoking, Alcohol</div>`,
+        ttKco: `<div class="tt-section"><div class="tt-inc">▲ Factors Increasing KCO:</div>Neuromuscular diseases, inadequate inspiratory effort, kyphoscoliosis, lung resections with healthy remaining parenchyma, alveolar hemorrhage, mild left heart failure.</div><div class="tt-section"><div class="tt-dec">▼ Factors Decreasing KCO:</div>Emphysema, interstitial lung diseases, pulmonary vascular diseases, diffuse alveolo-capillary damage.</div>`,
+        ttSft: `<div class="tt-section"><div class="tt-title" style="color: #4ade80;">🟢 Normal Spirometry Trend:</div>FEV1/FVC &ge; 70% and FVC &ge; 80%. Lung volumes and airways are within physiological limits.</div><div class="tt-section"><div class="tt-title" style="color: #e67e22;">🟠 Obstructive Pattern:</div>Indicated by FEV1/FVC &lt; 70%. Airflow limitation is present. Severity is graded based on FEV1.</div><div class="tt-section"><div class="tt-title" style="color: #f1c40f;">🟡 Restrictive Pattern Trend:</div>FEV1/FVC &ge; 70% and FVC &lt; 80%, raising suspicion of volume restriction. Graded based on FVC.</div>`
+    }
+};
+
+function changeLanguage(lang) {
+    currentLang = lang;
+    document.getElementById('btnTr').classList.toggle('active', lang === 'tr');
+    document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+    
+    // UI Metinlerini güncelle
+    const data = langData[lang];
+    document.getElementById('uiTitle').innerText = data.title;
+    document.getElementById('uiSubtitle').innerText = data.subtitle;
+    document.getElementById('uiSec1').innerText = data.sec1;
+    document.getElementById('uiSec2').innerText = data.sec2;
+    document.getElementById('uiLblDlco').innerText = data.lblDlco;
+    document.getElementById('uiLblKco').innerText = data.lblKco;
+    document.getElementById('uiLblFev1').innerText = data.lblFev1;
+    document.getElementById('uiLblFvc').innerText = data.lblFvc;
+    document.getElementById('uiLblRatio').innerText = data.lblRatio;
+    document.getElementById('uiToggleTxt').innerText = data.toggleTxt;
+    document.getElementById('uiClassicLbl').innerText = data.classicLbl;
+    document.getElementById('uiResTitle').innerText = data.resTitle;
+    document.getElementById('uiResSft').innerText = data.resSft;
+    document.getElementById('uiResMech').innerText = data.resMech;
+    document.getElementById('uiResDiseases').innerText = data.resDiseases;
+    
+    document.getElementById('optNormal').innerText = data.optNormal;
+    document.getElementById('optObst').innerText = data.optObst;
+    document.getElementById('optRest').innerText = data.optRest;
+    document.getElementById('optMixed').innerText = data.optMixed;
+    
+    document.getElementById('ttDlco').innerHTML = data.ttDlco;
+    document.getElementById('ttKco').innerHTML = data.ttKco;
+    document.getElementById('ttSft').innerHTML = data.ttSft;
+    
+    evaluateMetrics();
+}
+
+function toggleSftMode() {
+    const isManual = document.getElementById('manualSftToggle').checked;
+    const classicGroup = document.getElementById('classicSftGroup');
+    const customGroup = document.getElementById('customSftGroup');
+
+    if (isManual) {
+        classicGroup.classList.add('hidden');
+        customGroup.classList.remove('hidden');
+    } else {
+        classicGroup.classList.remove('hidden');
+        customGroup.classList.add('hidden');
+    }
+    evaluateMetrics();
+}
+
+function evaluateMetrics() {
+    const dlco = parseFloat(document.getElementById('dlco').value);
+    const dlcoVa = parseFloat(document.getElementById('dlcoVa').value);
+    const isManualSft = document.getElementById('manualSftToggle').checked;
+    
+    let sft = "";
+    let sftLabelText = "";
+
+    document.getElementById('dlcoNum').innerText = dlco;
+    document.getElementById('dlcoVaNum').innerText = dlcoVa;
+
+    if (isManualSft) {
+        const fev1 = parseFloat(document.getElementById('fev1').value);
+        const fvc = parseFloat(document.getElementById('fvc').value);
+        const fev1FvcInput = parseFloat(document.getElementById('fev1Fvc').value);
+        
+        document.getElementById('fev1Num').innerText = fev1;
+        document.getElementById('fvcNum').innerText = fvc;
+        document.getElementById('fev1FvcRatio').innerText = fev1FvcInput;
+
+        const sftBadge = document.getElementById('calculatedSftBadge');
+
+        // PATERN TESPİTİ
+        if (fev1FvcInput < 70) {
+            if (fvc < 80) {
+                sft = "mikst";
+                sftLabelText = currentLang === 'tr' ? 
+                    "Mikst Patern (FEV1/FVC: %" + fev1FvcInput + " | FVC: %" + fvc + ")" :
+                    "Mixed Pattern (FEV1/FVC: " + fev1FvcInput + "% | FVC: " + fvc + "%)";
+                sftBadge.innerText = currentLang === 'tr' ? "SFT Bulgusu: Mikst Patern" : "Spirometry Finding: Mixed Pattern";
+                sftBadge.className = "severity-badge sh-orta";
+            } else {
+                sft = "obstruktif";
+                sftLabelText = currentLang === 'tr' ? 
+                    "Obstrüktif Patern (FEV1/FVC: %" + fev1FvcInput + " | FVC: %" + fvc + ")" :
+                    "Obstructive Pattern (FEV1/FVC: " + fev1FvcInput + "% | FVC: " + fvc + "%)";
+                sftBadge.innerText = currentLang === 'tr' ? "SFT Bulgusu: Obstrüktif Patern" : "Spirometry Finding: Obstructive Pattern";
+                sftBadge.className = "severity-badge sh-hafif";
+            }
+        } else {
+            if (fvc < 80) {
+                sft = "restriktif";
+                sftLabelText = currentLang === 'tr' ? 
+                    "Restriktif Patern Eğilimi (FEV1/FVC: %" + fev1FvcInput + " | FVC: %" + fvc + ")" :
+                    "Restrictive Pattern Trend (FEV1/FVC: " + fev1FvcInput + "% | FVC: " + fvc + "%)";
+                sftBadge.innerText = currentLang === 'tr' ? "SFT Bulgusu: Restriktif Patern Eğilimi" : "Spirometry Finding: Restrictive Pattern Trend";
+                sftBadge.className = "severity-badge sh-sınırda";
+            } else {
+                sft = "normal";
+                sftLabelText = currentLang === 'tr' ? 
+                    "Normal SFT (FEV1/FVC: %" + fev1FvcInput + " | FVC: %" + fvc + ")" :
+                    "Normal Spirometry (FEV1/FVC: " + fev1FvcInput + "% | FVC: " + fvc + "%)";
+                sftBadge.innerText = currentLang === 'tr' ? "SFT Bulgusu: Normal Akım Hatları" : "Spirometry Finding: Normal Airflow Lines";
+                sftBadge.className = "severity-badge sh-normal";
+            }
+        }
+
+        // FEV1 ŞİDDET ROZETİ (Obstrüktif şiddet baremleri)
+        const fev1Badge = document.getElementById('fev1Severity');
+        if (fev1FvcInput < 70) {
+            if (fev1 >= 80) {
+                fev1Badge.className = "severity-badge sh-hafif";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Hafif Obstrüktif Tablo (≥%80)" : "FEV1: Mild Obstructive Profile (≥80%)";
+            } else if (fev1 >= 50) {
+                fev1Badge.className = "severity-badge sh-orta";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Orta Obstrüktif Tablo (%50-79)" : "FEV1: Moderate Obstructive Profile (50-79%)";
+            } else if (fev1 >= 30) {
+                fev1Badge.className = "severity-badge sh-ileri";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Ağır Obstrüktif Tablo (%30-49)" : "FEV1: Severe Obstructive Profile (30-49%)";
+            } else {
+                fev1Badge.className = "severity-badge sh-ileri";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Çok Ağır Obstrüktif Tablo (<%30)" : "FEV1: Very Severe Obstructive Profile (<30%)";
+            }
+        } else {
+            if (fev1 >= 80) {
+                fev1Badge.className = "severity-badge sh-normal";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Normal (≥%80)" : "FEV1: Normal (≥80%)";
+            } else if (fev1 >= 60) {
+                fev1Badge.className = "severity-badge sh-hafif";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Hafif Azalma (%60-79)" : "FEV1: Mild Decrease (60-79%)";
+            } else if (fev1 >= 40) {
+                fev1Badge.className = "severity-badge sh-orta";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Orta Azalma (%40-59)" : "FEV1: Moderate Decrease (40-59%)";
+            } else {
+                fev1Badge.className = "severity-badge sh-ileri";
+                fev1Badge.innerText = currentLang === 'tr' ? "FEV1: Ağır Azalma (<%40)" : "FEV1: Severe Decrease (<40%)";
+            }
+        }
+
+        // FVC ŞİDDET ROZETİ (Restriksiyon kısıtlılık dereceleri)
+        const fvcBadge = document.getElementById('fvcSeverity');
+        if (fev1FvcInput >= 70 && fvc < 80) {
+            if (fvc >= 65) {
+                fvcBadge.className = "severity-badge sh-hafif";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Hafif Derecede Restriksiyon (%65-79)" : "FVC: Mild Restriction (%65-79)";
+            } else if (fvc >= 50) {
+                fvcBadge.className = "severity-badge sh-orta";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Orta Derecede Restriksiyon (%50-64)" : "FVC: Moderate Restriction (%50-64)";
+            } else if (fvc >= 35) {
+                fvcBadge.className = "severity-badge sh-ileri";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Ağır Derecede Restriksiyon (%35-49)" : "FVC: Severe Restriction (%35-49)";
+            } else {
+                fvcBadge.className = "severity-badge sh-ileri";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Çok Ağır Derecede Restriksiyon (<%35)" : "FVC: Very Severe Restriction (<%35)";
+            }
+        } else {
+            if (fvc >= 80) {
+                fvcBadge.className = "severity-badge sh-normal";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Normal (≥%80)" : "FVC: Normal (≥80%)";
+            } else if (fvc >= 60) {
+                fvcBadge.className = "severity-badge sh-hafif";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Hafif Azalma (%60-79)" : "FVC: Mild Decrease (60-79%)";
+            } else if (fvc >= 40) {
+                fvcBadge.className = "severity-badge sh-orta";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Orta Azalma (%40-59)" : "FVC: Moderate Decrease (40-59%)";
+            } else {
+                fvcBadge.className = "severity-badge sh-ileri";
+                fvcBadge.innerText = currentLang === 'tr' ? "FVC: Ağır Azalma (<%40)" : "FVC: Severe Decrease (<40%)";
+            }
+        }
+
+    } else {
+        sft = document.getElementById('sft').value;
+        const sftSelect = document.getElementById('sft');
+        // Kategorik eşleşme dil desteği
+        if (sft === "normal") sftLabelText = currentLang === 'tr' ? "Normal" : "Normal";
+        if (sft === "obstruktif") sftLabelText = currentLang === 'tr' ? "Obstrüktif" : "Obstructive";
+        if (sft === "restriktif") sftLabelText = currentLang === 'tr' ? "Restriktif" : "Restrictive";
+        if (sft === "mikst") sftLabelText = currentLang === 'tr' ? "Mikst (Obstrüktif + Restriktif)" : "Mixed (Obstructive + Restrictive)";
+    }
+    document.getElementById('activeSftText').innerText = sftLabelText;
+
+    // DLCO ve KCO Şiddet Rozetleri Dil Ayarı
+    const dlcoBadge = document.getElementById('dlcoSeverity');
+    const dlcoVaBadge = document.getElementById('dlcoVaSeverity');
+    
+    if (dlco > 140) {
+        dlcoBadge.className = "severity-badge sh-yüksek";
+        dlcoBadge.innerText = currentLang === 'tr' ? "Şiddet: Yüksek (>%140)" : "Severity: High (>140%)";
+    } else if (dlco >= 80) {
+        dlcoBadge.className = "severity-badge sh-normal";
+        dlcoBadge.innerText = currentLang === 'tr' ? "Şiddet: Normal (%80-140)" : "Severity: Normal (80-140%)";
+    } else if (dlco >= 75) {
+        dlcoBadge.className = "severity-badge sh-sınırda";
+        dlcoBadge.innerText = currentLang === 'tr' ? "Şiddet: Sınırda Düşük (%75-80)" : "Severity: Borderline Low (75-80%)";
+    } else if (dlco >= 60) {
+        dlcoBadge.className = "severity-badge sh-hafif";
+        dlcoBadge.innerText = currentLang === 'tr' ? "Şiddet: Hafif Derecede Azalma (%60-75)" : "Severity: Mild Decrease (60-75%)";
+    } else if (dlco >= 40) {
+        dlcoBadge.className = "severity-badge sh-orta";
+        dlcoBadge.innerText = currentLang === 'tr' ? "Şiddet: Orta Derecede Azalma (%40-60)" : "Severity: Moderate Decrease (40-60%)";
+    } else {
+        dlcoBadge.className = "severity-badge sh-ileri";
+        dlcoBadge.innerText = currentLang === 'tr' ? "Şiddet: İleri Derecede Azalma (<%40)" : "Severity: Severe Decrease (<40%)";
+    }
+
+    if (dlcoVa < 80) {
+        dlcoVaBadge.className = "severity-badge sh-orta";
+        dlcoVaBadge.innerText = currentLang === 'tr' ? "KCO: Düşük (<%80)" : "KCO: Low (<80%)";
+    } else if (dlcoVa <= 120) {
+        dlcoVaBadge.className = "severity-badge sh-normal";
+        dlcoVaBadge.innerText = currentLang === 'tr' ? "KCO: Normal (%80-120)" : "KCO: Normal (80-120%)";
+    } else {
+        dlcoVaBadge.className = "severity-badge sh-yüksek";
+        dlcoVaBadge.innerText = currentLang === 'tr' ? "KCO: Artmış (>%120)" : "KCO: Increased (>120%)";
+    }
+
+    let mech = "";
+    let diseasesArray = [];
+
+    // ENTEGRE ÇİFT DİLLİ KLİNİK ALGORİTMA MATRİSİ
+    if (dlco >= 80) {
+        if (currentLang === 'tr') {
+            mech = "Akciğer difüzyon kapasitesi korunmuş veya artmıştır. Akciğer kılcal damar kan hacminde artış, sabah varyasyonu veya fizyolojik/pozisyonel faktörler etkilidir.";
+            diseasesArray = [
+                "Astım (DLCO korunur veya artar)",
+                "Belirgin parankim hasarı olmaksızın Kronik Bronşit",
+                "Obezite",
+                "Polistemi",
+                "Sol-sağ kardiyak şant (örn: ASD)",
+                "Test öncesi egzersiz",
+                "Yüksek irtifa",
+                "Sabah saatleri (diurnal varyasyon)",
+                "Gebelik",
+                "Supin (yatar) pozisyon",
+                "Müller manevrası"
+            ];
+        } else {
+            mech = "Lung diffusion capacity is preserved or increased. Increased pulmonary capillary blood volume, morning variation, or physiological/positional factors are active.";
+            diseasesArray = [
+                "Asthma (DLCO is preserved or increased)",
+                "Chronic Bronchitis without significant parenchymal damage",
+                "Obesity",
+                "Polycythemia",
+                "Left-to-right cardiac shunt (e.g., ASD)",
+                "Pre-test exercise",
+                "High altitude",
+                "Morning hours (diurnal variation)",
+                "Pregnancy",
+                "Supine position",
+                "Müller maneuver"
+            ];
+        }
+    } else {
+        if (sft === "obstruktif" && dlcoVa < 80) {
+            if (currentLang === 'tr') {
+                mech = "Akciğerde kalıcı parankim hasarı ve gaz değişim yüzey alanı kaybı mevcuttur. Havayolu darlığı tabloya eşlik eder.";
+                diseasesArray = [
+                    "Pulmoner Amfizem (kapiller veya alveoler yatak hasarını ve amfizemin derecesini mükemmel yansıtır)",
+                    "İleri evre Kistik Fibrozis"
+                ];
+            } else {
+                mech = "Permanent lung parenchymal damage and gas exchange surface area loss are present. Airway narrowing accompanies the profile.";
+                diseasesArray = [
+                    "Pulmonary Emphysema (perfectly reflects capillary or alveolar bed damage and emphysema severity)",
+                    "Advanced stage Cystic Fibrosis"
+                ];
+            }
+        } 
+        else if (sft === "restriktif" && dlcoVa < 80) {
+            if (currentLang === 'tr') {
+                mech = "Alveolo-kapiller membran bariyerinde kalınlaşma, yapısal hasar veya yaygın pulmoner fibrozis mevcuttur. Akciğer hacimleri ve difüzyon paralel olarak düşer.";
+                diseasesArray = [
+                    "İnterstisyel Akciğer Hastalıkları (İAH)",
+                    "İdiyopatik Pulmoner Fibrozis (İPF)",
+                    "Pnömonit",
+                    "Pulmoner lenfanjitik karsinomatosis",
+                    "Akciğer hasarı yapan amiodaron, bleomisin, methotrexate gibi toksik ilaç kullanımları"
+                ];
+            } else {
+                mech = "Thickening, structural damage, or diffuse pulmonary fibrosis is present in the alveolo-capillary membrane barrier. Lung volumes and diffusion decrease in parallel.";
+                diseasesArray = [
+                    "Interstitial Lung Diseases (ILD)",
+                    "Idiopathic Pulmonary Fibrosis (IPF)",
+                    "Pneumonitis",
+                    "Pulmonary lymphangitic carcinomatosis",
+                    "Toxic drug exposures causing lung damage (e.g., amiodarone, bleomycin, methotrexate)"
+                ];
+            }
+        } 
+        else if (sft === "restriktif" && (dlcoVa >= 80 && dlcoVa <= 120)) {
+            if (currentLang === 'tr') {
+                mech = "Ventilasyonun normal dağılım gösterdiği saf akciğer volüm kaybı. Kalan akciğer dokusunun difüzyon performansı ve parankim yapısı tamamen sağlıklıdır.";
+                diseasesArray = [
+                    "Akciğer rezeksiyonu (Lobektomi/Pnömonektomi) sonrası fonksiyonel kalan doku"
+                ];
+            } else {
+                mech = "Pure lung volume loss with normal distribution of ventilation. Diffusion performance and parenchymal structure of the remaining lung tissue are completely intact.";
+                diseasesArray = [
+                    "Functionally remaining tissue post-lung resection (Lobectomy/Pneumonectomy)"
+                ];
+            }
+        } 
+        else if (sft === "restriktif" && dlcoVa > 120) {
+            if (currentLang === 'tr') {
+                mech = "Akciğer parankimi tamamen sağlamdır. Göğüs duvarı kısıtlılığı veya kas zayıflığı nedeniyle mekanik bir hacim kaybı ve kısıtlı inspiryum eforu vardır; bu yüzden birim hacme düşen kapiller yatak yoğunluğu yüksek hesaplanır.";
+                diseasesArray = [
+                    "Nöromüsküler zayıflık / hastalıklar",
+                    "Kifoskolyoz",
+                    "Akciğer dışı restriktif sebepler (İleri Obezite, Plörezi, Plevral kalınlaşma)"
+                ];
+            } else {
+                mech = "Lung parenchyma is completely intact. Mechanical volume loss and restricted inspiratory effort exist due to chest wall limitations or muscle weakness; thus, capillary bed density per unit volume is calculated as high.";
+                diseasesArray = [
+                    "Neuromuscular weakness / disorders",
+                    "Kyphoscoliosis",
+                    "Extrapulmonary restrictive causes (Advanced Obesity, Pleurisy, Pleural thickening)"
+                ];
+            }
+        } 
+        else if (sft === "normal" && dlcoVa < 80) {
+            if (currentLang === 'tr') {
+                mech = "Solunum yolları ve akciğer hacimleri normal sınırlarda olmasına karşın, doğrudan pulmoner damar yatağında tıkanma/hasar veya kan elemanlarında (Hb) taşıma yetersizliği mevcuttur.";
+                diseasesArray = [
+                    "Pulmoner Vasküler Hastalıklar (Kronik rekürren Pulmoner Emboli, İdiyopatik Pulmoner Arteriyel Hipertansiyon - İPAH, Kronik venöz tromboemboli - KTEPH)",
+                    "Anemi",
+                    "Akşam saatleri varyasyonu",
+                    "Egzersiz sonrası erken dönem (postexercise)",
+                    "Ayakta durma pozisyonu (standing)",
+                    "Valsalva manevrası",
+                    "Çok erken evre İnterstisyel Akciğer Hastalığı (vital kapasite henüz düşmeden önceki dönem)"
+                ];
+            } else {
+                mech = "Airways and lung volumes are within normal limits, but there is direct obstruction/damage in the pulmonary vascular bed or transport insufficiency in blood elements (Hb).";
+                diseasesArray = [
+                    "Pulmonary Vascular Diseases (Chronic recurrent Pulmonary Embolism,固定 Idiopathic Pulmonary Arterial Hypertension - IPAH, Chronic thromboembolic pulmonary hypertension - CTEPH)",
+                    "Anemia",
+                    "Evening variation",
+                    "Early postexercise status",
+                    "Standing position",
+                    "Valsalva maneuver",
+                    "Very early stage Interstitial Lung Disease (prior to vital capacity reduction)"
+                ];
+            }
+        } 
+        else if (sft === "normal" && dlcoVa > 120) {
+            if (currentLang === 'tr') {
+                mech = "Akciğer kılcal damar yatağında kan birikimi/göllenmesi veya alveol boşluklarının içine serbest eritrosit sızıntısı vardır.";
+                diseasesArray = [
+                    "Alveoler Hemoraji (akciğer içi kanama)",
+                    "Hafif sol kalp yetmezliği"
+                ];
+            } else {
+                mech = "Blood pooling/congestion within the pulmonary capillary bed or free erythrocyte leakage into alveolar spaces is present.";
+                diseasesArray = [
+                    "Alveolar Hemorrhage (intrapulmonary bleeding)",
+                    "Mild left heart failure"
+                ];
+            }
+        } 
+        else if (sft === "mikst" && dlcoVa < 80) {
+            if (currentLang === 'tr') {
+                mech = "İnterstisyel tablonun ve parankimal kalınlaşmanın terminal bronşiyolleri dışarıdan sıkıştırarak daraltması sonucu, hacim kısıtlılığına obstrüktif bileşen de eklenmiştir.";
+                diseasesArray = [
+                    "Sarkoidoz (Evre II-IV)",
+                    "Asbestoz",
+                    "CPFE (Kombine Pulmoner Fibrozis ve Amfizem)",
+                    "Kalp yetmezliğine bağlı küçük havayolu ödemi"
+                ];
+            } else {
+                mech = "Interstitial process and parenchymal thickening compress and narrow the terminal bronchioles from the outside, adding an obstructive component to the restriction.";
+                diseasesArray = [
+                    "Sarcoidosis (Stage II-IV)",
+                    "Asbestosis",
+                    "CPFE (Combined Pulmonary Fibrosis and Emphysema)",
+                    "Small airway edema secondary to heart failure"
+                ];
+            }
+        } 
+        else {
+            if (currentLang === 'tr') {
+                mech = "Kombine veya atipik fizyopatoloji anomalisi.";
+                diseasesArray = [
+                    "Klinik bulgular, anlık Hemoglobin (Hb) değeri, sigara öyküsü ve HRCT verileri ile ortak korelasyon gereklidir."
+                ];
+            } else {
+                mech = "Combined or atypical pathophysiological anomaly.";
+                diseasesArray = [
+                    "Correlation with clinical signs, instant Hemoglobin (Hb) levels, smoking history, and HRCT data is required."
+                ];
+            }
+        }
+    }
+
+    document.getElementById('mechanismText').innerText = mech;
+    
+    let listHtml = "<ul class='result-list'>";
+    for (let i = 0; i < diseasesArray.length; i++) {
+        listHtml += "<li>" + diseasesArray[i] + "</li>";
+    }
+    listHtml += "</ul>";
+    
+    document.getElementById('diseasesText').innerHTML = listHtml;
+}
+
+// İlk açılışta tetikleme
+window.onload = function() {
+    changeLanguage('tr');
+};
+</script>
+
+</body>
+</html>
